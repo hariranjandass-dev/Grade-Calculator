@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>My Dashboard</h2>
+            <p class="text-muted mb-0">Welcome back, <strong>{{ user.username }}</strong></p>
+        </div>
+        <a href="{% url 'add_semester' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Add Semester
+        </a>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 text-center p-3">
+                <div class="fs-1 fw-bold text-primary">{{ cgpa }}</div>
+                <div class="text-muted small fw-medium">CGPA / OGPA</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 text-center p-3">
+                <div class="fs-1 fw-bold text-success">{{ percentage }}%</div>
+                <div class="text-muted small fw-medium">Percentage</div>
+                <div class="text-muted" style="font-size:.7rem">(CGPA − 0.25) × 10</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 text-center p-3">
+                <div class="fs-1 fw-bold text-warning">{{ total_credits }}</div>
+                <div class="text-muted small fw-medium">Total Credits</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 text-center p-3">
+                <div class="fs-1 fw-bold text-info">{{ semesters|length }}</div>
+                <div class="text-muted small fw-medium">Semesters</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Degree Class Banner -->
+    {% if semesters %}
+    <div class="alert {% if 'Honours' in degree_class %}alert-success{% elif 'Distinction' in degree_class %}alert-primary{% elif 'First' in degree_class %}alert-info{% elif 'Second' in degree_class %}alert-secondary{% else %}alert-warning{% endif %} d-flex align-items-center mb-4" role="alert">
+        <i class="bi bi-award-fill fs-4 me-3"></i>
+        <div>
+            <strong>Degree Classification:</strong> {{ degree_class }}
+            {% if 'Honours' in degree_class %} — CGPA ≥ 8.25, 192+ credits, all first attempt
+            {% elif 'Distinction' in degree_class %} — CGPA ≥ 8.25, 172+ credits, all first attempt
+            {% elif 'First Class' in degree_class %} — CGPA ≥ 6.75
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if semesters %}
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light fw-semibold"><i class="bi bi-bar-chart me-2"></i>Semester GPA</div>
+                <div class="card-body"><canvas id="gpaChart" height="110"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light fw-semibold"><i class="bi bi-graph-up me-2"></i>Cumulative CGPA</div>
+                <div class="card-body"><canvas id="cgpaChart" height="220"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Semester Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light fw-semibold"><i class="bi bi-table me-2"></i>Semester Performance</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Semester</th>
+                            <th>Year</th>
+                            <th>GPA</th>
+                            <th>Credits</th>
+                            <th>Percentage</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sem in semesters %}
+                        <tr>
+                            <td><span class="badge bg-primary">Semester {{ sem.semester_number }}</span></td>
+                            <td class="text-muted">{{ sem.academic_year|default:"—" }}</td>
+                            <td>
+                                <span class="fw-bold {% if sem.gpa >= 9 %}text-success{% elif sem.gpa >= 7 %}text-primary{% elif sem.gpa >= 5 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ sem.gpa }}
+                                </span>
+                            </td>
+                            <td>{{ sem.total_credits }}</td>
+                            <td class="text-muted">
+                                {% with p=sem.gpa|add:"-0.25" %}
+                                —
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <a href="{% url 'semester_detail' sem.pk %}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="bi bi-eye"></i></a>
+                                <a href="{% url 'subject_management' sem.pk %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit subjects"><i class="bi bi-pencil"></i></a>
+                                <a href="{% url 'delete_semester' sem.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
+            <h5 class="text-muted">No semesters yet</h5>
+            <p class="text-muted mb-4">Add your first semester to start tracking your performance.</p>
+            <a href="{% url 'add_semester' %}" class="btn btn-primary px-4">
+                <i class="bi bi-plus-circle me-2"></i>Add Semester I
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Links -->
+    <div class="row g-3 mt-2">
+        <div class="col-md-4">
+            <a href="{% url 'target_cgpa' %}" class="card border-0 shadow-sm text-decoration-none text-dark h-100">
+                <div class="card-body text-center p-3">
+                    <i class="bi bi-bullseye text-warning fs-3 mb-2 d-block"></i>
+                    <div class="fw-semibold">Target CGPA Calculator</div>
+                    <small class="text-muted">Find required GPA for Honours / First Class</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'grading_system' %}" class="card border-0 shadow-sm text-decoration-none text-dark h-100">
+                <div class="card-body text-center p-3">
+                    <i class="bi bi-sliders text-secondary fs-3 mb-2 d-block"></i>
+                    <div class="fw-semibold">Grading System</div>
+                    <small class="text-muted">S=10, A=9, B=8, C=7, D=6, E=5, RA=0</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'gpa_calculator' %}" class="card border-0 shadow-sm text-decoration-none text-dark h-100">
+                <div class="card-body text-center p-3">
+                    <i class="bi bi-calculator text-primary fs-3 mb-2 d-block"></i>
+                    <div class="fw-semibold">GPA Calculator</div>
+                    <small class="text-muted">Quick semester GPA calculation</small>
+                </div>
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if semesters %}
+<script>
+const chartLabels = {{ chart_labels|safe }};
+const chartGpas   = {{ chart_gpas|safe }};
+const cgpaData    = {{ cumulative_cgpa|safe }};
+
+new Chart(document.getElementById('gpaChart'), {
+    type: 'bar',
+    data: {
+        labels: chartLabels,
+        datasets: [{
+            label: 'GPA',
+            data: chartGpas,
+            backgroundColor: chartGpas.map(g =>
+                g >= 9 ? 'rgba(25,135,84,0.2)' :
+                g >= 7 ? 'rgba(13,110,253,0.2)' :
+                g >= 5 ? 'rgba(255,193,7,0.2)' : 'rgba(220,53,69,0.2)'
+            ),
+            borderColor: chartGpas.map(g =>
+                g >= 9 ? 'rgb(25,135,84)' :
+                g >= 7 ? 'rgb(13,110,253)' :
+                g >= 5 ? 'rgb(255,193,7)' : 'rgb(220,53,69)'
+            ),
+            borderWidth: 2,
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { min: 0, max: 10, ticks: { stepSize: 1 },
+                 title: { display: true, text: 'GPA (10-point scale)' } }
+        }
+    }
+});
+
+new Chart(document.getElementById('cgpaChart'), {
+    type: 'line',
+    data: {
+        labels: chartLabels,
+        datasets: [{
+            label: 'CGPA',
+            data: cgpaData,
+            borderColor: 'rgb(13,110,253)',
+            backgroundColor: 'rgba(13,110,253,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: 'rgb(13,110,253)',
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    afterLabel: ctx => `Percentage: ${((ctx.parsed.y - 0.25) * 10).toFixed(2)}%`
+                }
+            }
+        },
+        scales: { y: { min: 0, max: 10 } }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

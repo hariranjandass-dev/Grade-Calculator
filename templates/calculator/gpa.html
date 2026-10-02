@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}GPA Calculator{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+
+            <div class="d-flex align-items-center mb-4">
+                <i class="bi bi-calculator fs-2 text-primary me-3"></i>
+                <div>
+                    <h2 class="fw-bold mb-0">GPA Calculator</h2>
+                    <p class="text-muted mb-0">
+                        Enter subject name, credits and marks —
+                        <strong>Grade &amp; Grade Point fill automatically.</strong>
+                    </p>
+                </div>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ error }}</div>
+            {% endif %}
+
+            <div class="alert alert-info py-2 mb-3">
+                <i class="bi bi-lightbulb me-2"></i>
+                Type marks (0–100) → <strong>Grade</strong> and <strong>Grade Point</strong> auto-fill instantly.
+                Click <strong>+ Add Subject</strong> to add more rows.
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <form method="post" id="gpaForm">
+                        {% csrf_token %}
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered align-middle mb-0">
+                                <thead class="table-primary text-center">
+                                    <tr>
+                                        <th class="text-start">Subject Name</th>
+                                        <th style="width:95px">Credits</th>
+                                        <th style="width:110px">Marks<br><small class="fw-normal">(0–100)</small></th>
+                                        <th style="width:88px">Grade<br><small class="fw-normal">(auto)</small></th>
+                                        <th style="width:110px">Grade Point<br><small class="fw-normal">(auto)</small></th>
+                                        <th style="width:50px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subjectBody">
+                                    {% if subjects %}
+                                        {% for s in subjects %}
+                                        <tr class="subject-row">
+                                            <td><input type="text" name="subject_name[]" class="form-control form-control-sm" value="{{ s.name }}" placeholder="e.g. Mathematics – I" required></td>
+                                            <td><input type="number" name="credits[]" class="form-control form-control-sm text-center" value="{{ s.credits }}" min="0.5" step="0.5" required></td>
+                                            <td><input type="number" name="marks[]" class="form-control form-control-sm marks-input text-center" value="{{ s.marks }}" min="0" max="100" step="0.01"></td>
+                                            <td><input type="text" class="form-control form-control-sm grade-display text-center fw-bold" value="{{ s.grade }}" readonly tabindex="-1" style="background:#f8f9fa"></td>
+                                            <td><input type="number" class="form-control form-control-sm points-display text-center" value="{{ s.grade_point }}" readonly tabindex="-1" style="background:#f8f9fa"></td>
+                                            <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-row"><i class="bi bi-trash"></i></button></td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr class="subject-row">
+                                            <td><input type="text" name="subject_name[]" class="form-control form-control-sm" placeholder="e.g. Mathematics – I" required></td>
+                                            <td><input type="number" name="credits[]" class="form-control form-control-sm text-center" value="4" min="0.5" step="0.5" required></td>
+                                            <td><input type="number" name="marks[]" class="form-control form-control-sm marks-input text-center" placeholder="e.g. 75" min="0" max="100" step="0.01"></td>
+                                            <td><input type="text" class="form-control form-control-sm grade-display text-center fw-bold" readonly tabindex="-1" style="background:#f8f9fa" placeholder="auto"></td>
+                                            <td><input type="number" class="form-control form-control-sm points-display text-center" readonly tabindex="-1" style="background:#f8f9fa" placeholder="auto"></td>
+                                            <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm remove-row"><i class="bi bi-trash"></i></button></td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <button type="button" id="addSubject" class="btn btn-outline-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Add Subject
+                            </button>
+                            <span class="text-muted">Total Credits: <strong id="totalCredits" class="text-primary fs-5">—</strong></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg px-5 fw-semibold">
+                            <i class="bi bi-calculator me-2"></i>Calculate GPA
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if result is not None %}
+            <div class="card mt-4 border-0 shadow" style="background:linear-gradient(135deg,#e8f0fe,#f0f7ff)">
+                <div class="card-body text-center py-5">
+                    <p class="text-muted fs-5 mb-1">Your Semester GPA</p>
+                    <div class="display-1 fw-bold text-primary">{{ result }}</div>
+                    <div class="mt-3 d-flex justify-content-center gap-3 flex-wrap">
+                        <span class="badge bg-light text-dark border fs-6 px-3 py-2">
+                            Honours / Distinction ≥ 8.25
+                            {% if result >= 8.25 %}<i class="bi bi-check-circle-fill text-success ms-1"></i>{% endif %}
+                        </span>
+                        <span class="badge bg-light text-dark border fs-6 px-3 py-2">
+                            First Class ≥ 6.75
+                            {% if result >= 6.75 %}<i class="bi bi-check-circle-fill text-success ms-1"></i>{% endif %}
+                        </span>
+                    </div>
+                    {% if user.is_authenticated %}
+                    <div class="mt-4">
+                        <a href="{% url 'add_semester' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-floppy me-1"></i>Save to Dashboard
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="mt-4">
+                        <a href="{% url 'register' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-person-plus me-1"></i>Register to Save Results
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if subjects %}
+            <div class="card mt-3 border-0 shadow-sm">
+                <div class="card-header bg-light fw-semibold"><i class="bi bi-list-check me-2"></i>Subject Breakdown</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0 align-middle text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-start">#</th>
+                                <th class="text-start">Subject</th>
+                                <th>Credits</th><th>Marks</th><th>Grade</th>
+                                <th>Grade Point</th><th>Credit × Point</th><th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in subjects %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="text-start">{{ s.name }}</td>
+                                <td>{{ s.credits }}</td>
+                                <td>{{ s.marks }}</td>
+                                <td>
+                                    <span class="badge
+                                        {% if s.grade == 'S' %}bg-success
+                                        {% elif s.grade == 'A' %}bg-primary
+                                        {% elif s.grade == 'B' %}bg-info text-dark
+                                        {% elif s.grade == 'C' %}bg-warning text-dark
+                                        {% elif s.grade == 'D' or s.grade == 'E' %}bg-secondary
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ s.grade }}
+                                    </span>
+                                </td>
+                                <td class="fw-bold">{{ s.grade_point }}</td>
+                                <td class="text-muted">
+                                    {% if s.grade == 'RA' %}<span class="text-danger">Excluded</span>
+                                    {% else %}{{ s.credits }} × {{ s.grade_point }}{% endif %}
+                                </td>
+                                <td>
+                                    {% if s.grade == 'RA' %}<span class="badge bg-danger">Reappear</span>
+                                    {% else %}<span class="badge bg-success">Pass</span>{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-3 py-2 bg-light border-top">
+                    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>RA courses excluded from GPA per university rules.</small>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <!-- Grade Scale Reference -->
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-header bg-light fw-semibold d-flex justify-content-between">
+                    <span><i class="bi bi-table me-2"></i>Grading Scale</span>
+                    {% if user.is_authenticated %}<a href="{% url 'grading_system' %}" class="btn btn-sm btn-outline-secondary">Customize</a>{% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0 text-center">
+                            <thead class="table-light"><tr><th>Marks</th><th>Grade</th><th>Grade Point</th></tr></thead>
+                            <tbody id="gradeScaleTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>var GRADE_SCALES = {{ grade_scales_json|safe }};</script>
+<script src="{% static 'js/gpa.js' %}"></script>
+{% endblock %}

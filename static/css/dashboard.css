@@ -1,0 +1,3 @@
+/* dashboard.css — dashboard-specific styles */
+.stat-card .fs-2 { line-height: 1.1; }
+canvas { max-height: 300px; }

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow border-0">
+                <div class="card-body p-5">
+                    <h2 class="fw-bold text-center mb-4"><i class="bi bi-box-arrow-in-right me-2 text-primary"></i>Login</h2>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Username</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                            <div class="text-danger small mt-1">{{ form.username.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-medium">Password</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                            <div class="text-danger small mt-1">{{ form.password.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Login</button>
+                    </form>
+                    <hr class="my-4">
+                    <p class="text-center mb-0">Don't have an account? <a href="{% url 'register' %}" class="text-primary fw-medium">Register here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

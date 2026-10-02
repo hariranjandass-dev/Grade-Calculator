@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}CGPA Calculator{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="d-flex align-items-center mb-4">
+                <i class="bi bi-graph-up fs-2 text-success me-3"></i>
+                <div>
+                    <h2 class="fw-bold mb-0">CGPA / OGPA Calculator</h2>
+                    <p class="text-muted mb-0">Credit-weighted average across all semesters. CGPA = Σ(GPA × Credits) / Σ(Credits)</p>
+                </div>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ error }}</div>
+            {% endif %}
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <form method="post" id="cgpaForm">
+                        {% csrf_token %}
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th>Semester</th>
+                                        <th>GPA (0–10)</th>
+                                        <th>Credits</th>
+                                        <th style="width:60px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="semesterBody">
+                                    {% if semesters %}
+                                    {% for s in semesters %}
+                                    <tr class="semester-row">
+                                        <td class="text-muted semester-label fw-medium">Semester {{ forloop.counter }}</td>
+                                        <td><input type="number" name="gpa[]" class="form-control form-control-sm" value="{{ s.gpa }}" min="0" max="10" step="0.01" required></td>
+                                        <td><input type="number" name="credits[]" class="form-control form-control-sm" value="{{ s.total_credits }}" min="1" required></td>
+                                        <td><button type="button" class="btn btn-outline-danger btn-sm remove-semester"><i class="bi bi-trash"></i></button></td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                    <tr class="semester-row">
+                                        <td class="text-muted semester-label fw-medium">Semester 1</td>
+                                        <td><input type="number" name="gpa[]" class="form-control form-control-sm" placeholder="e.g. 8.50" min="0" max="10" step="0.01" required></td>
+                                        <td><input type="number" name="credits[]" class="form-control form-control-sm" placeholder="e.g. 21" min="1" required></td>
+                                        <td><button type="button" class="btn btn-outline-danger btn-sm remove-semester"><i class="bi bi-trash"></i></button></td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <button type="button" id="addSemester" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i>Add Semester
+                            </button>
+                            <span class="text-muted small">Total Credits: <strong id="totalCredits">—</strong></span>
+                        </div>
+                        <button type="submit" class="btn btn-success px-5 py-2 fw-semibold">
+                            <i class="bi bi-graph-up me-2"></i>Calculate CGPA
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if result is not None %}
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-body text-center p-5">
+                    <div class="row g-4">
+                        <div class="col-6">
+                            <p class="text-muted mb-1">CGPA / OGPA</p>
+                            <div class="display-3 fw-bold text-success">{{ result }}</div>
+                        </div>
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Percentage</p>
+                            <div class="display-3 fw-bold text-primary">{{ percentage }}%</div>
+                            <small class="text-muted">({{ result }} − 0.25) × 10</small>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="row text-center">
+                        <div class="col-4"><small class="text-muted">Honours</small><br><strong class="{% if result >= 8.25 %}text-success{% else %}text-muted{% endif %}">≥ 8.25 {% if result >= 8.25 %}✓{% endif %}</strong></div>
+                        <div class="col-4"><small class="text-muted">First Class with Distinction</small><br><strong class="{% if result >= 8.25 %}text-success{% else %}text-muted{% endif %}">≥ 8.25 {% if result >= 8.25 %}✓{% endif %}</strong></div>
+                        <div class="col-4"><small class="text-muted">First Class</small><br><strong class="{% if result >= 6.75 %}text-success{% else %}text-muted{% endif %}">≥ 6.75 {% if result >= 6.75 %}✓{% endif %}</strong></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Info card -->
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-header bg-light fw-semibold"><i class="bi bi-info-circle me-2"></i>Degree Classification</div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light"><tr><th>Class</th><th>CGPA Required</th><th>Credits</th></tr></thead>
+                        <tbody>
+                            <tr><td><span class="badge bg-success">Honours</span></td><td>≥ 8.25</td><td>192+ (4 years, first attempt)</td></tr>
+                            <tr><td><span class="badge bg-primary">First Class with Distinction</span></td><td>≥ 8.25</td><td>172+ (4 years, first attempt)</td></tr>
+                            <tr><td><span class="badge bg-info text-dark">First Class</span></td><td>≥ 6.75</td><td>172+ (within 5 years)</td></tr>
+                            <tr><td><span class="badge bg-secondary">Second Class</span></td><td>Any</td><td>172+ (within 7 years)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var body = document.getElementById('semesterBody');
+    var addBtn = document.getElementById('addSemester');
+
+    function updateLabels() {
+        body.querySelectorAll('.semester-label').forEach(function(el, i) {
+            el.textContent = 'Semester ' + (i + 1);
+        });
+    }
+    function updateTotalCredits() {
+        var total = 0;
+        body.querySelectorAll('input[name="credits[]"]').forEach(function(i) {
+            var v = parseInt(i.value); if (!isNaN(v) && v > 0) total += v;
+        });
+        document.getElementById('totalCredits').textContent = total > 0 ? total : '—';
+    }
+
+    addBtn.addEventListener('click', function() {
+        var count = body.querySelectorAll('.semester-row').length + 1;
+        body.insertAdjacentHTML('beforeend',
+            '<tr class="semester-row">' +
+            '<td class="text-muted semester-label fw-medium">Semester ' + count + '</td>' +
+            '<td><input type="number" name="gpa[]" class="form-control form-control-sm" placeholder="e.g. 8.50" min="0" max="10" step="0.01" required></td>' +
+            '<td><input type="number" name="credits[]" class="form-control form-control-sm" placeholder="e.g. 21" min="1" required></td>' +
+            '<td><button type="button" class="btn btn-outline-danger btn-sm remove-semester"><i class="bi bi-trash"></i></button></td>' +
+            '</tr>');
+        updateTotalCredits();
+    });
+
+    body.addEventListener('click', function(e) {
+        var btn = e.target.closest('.remove-semester');
+        if (btn && body.querySelectorAll('.semester-row').length > 1) {
+            btn.closest('.semester-row').remove();
+            updateLabels(); updateTotalCredits();
+        }
+    });
+    body.addEventListener('input', function(e) {
+        if (e.target.name === 'credits[]') updateTotalCredits();
+    });
+    updateTotalCredits();
+})();
+</script>
+{% endblock %}

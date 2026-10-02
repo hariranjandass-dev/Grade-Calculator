@@ -1,0 +1,4 @@
+/* calculator.css — extra calculator-specific styles */
+.marks-input::-webkit-inner-spin-button { opacity: 1; }
+.grade-display, .points-display { background: #f8f9fa; font-weight: 600; }
+.result-card { background: linear-gradient(135deg, #f0f7ff, #e8f0fe); }

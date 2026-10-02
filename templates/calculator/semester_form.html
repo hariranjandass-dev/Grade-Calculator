@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Semester{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <h2 class="fw-bold mb-4">{{ action }} Semester</h2>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Semester Number</label>
+                            {{ form.semester_number }}
+                            {% if form.semester_number.errors %}<div class="text-danger small">{{ form.semester_number.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-medium">Academic Year <span class="text-muted">(optional)</span></label>
+                            {{ form.academic_year }}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold">{{ action }}</button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

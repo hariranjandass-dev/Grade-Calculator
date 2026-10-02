@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Target CGPA{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="d-flex align-items-center mb-4">
+                <i class="bi bi-bullseye fs-2 text-warning me-3"></i>
+                <div>
+                    <h2 class="fw-bold mb-0">Target CGPA Calculator</h2>
+                    <p class="text-muted mb-0">Find the GPA you need in upcoming semesters to reach your goal.</p>
+                </div>
+            </div>
+
+            <!-- Degree goal quick picks -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body py-3">
+                    <p class="fw-semibold mb-2 small text-muted">QUICK GOAL TARGETS</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-success set-target" data-target="8.25">
+                            🏅 Honours / Distinction ≥ 8.25
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary set-target" data-target="6.75">
+                            🎓 First Class ≥ 6.75
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <form method="post" novalidate id="targetForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Current CGPA</label>
+                            {{ form.current_cgpa }}
+                            {% if form.current_cgpa.errors %}<div class="text-danger small">{{ form.current_cgpa.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Credits Completed So Far</label>
+                            {{ form.completed_credits }}
+                            {% if form.completed_credits.errors %}<div class="text-danger small">{{ form.completed_credits.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Target CGPA</label>
+                            {{ form.target_cgpa }}
+                            {% if form.target_cgpa.errors %}<div class="text-danger small">{{ form.target_cgpa.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Upcoming Semester Credits</label>
+                            {{ form.future_credits }}
+                            {% if form.future_credits.errors %}<div class="text-danger small">{{ form.future_credits.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-medium">Maximum GPA Scale <span class="text-muted">(10 for this university)</span></label>
+                            {{ form.max_gpa }}
+                        </div>
+                        <button type="submit" class="btn btn-warning px-5 py-2 fw-semibold text-white w-100">
+                            <i class="bi bi-bullseye me-2"></i>Calculate Required GPA
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if result is not None %}
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-body text-center p-5">
+                    {% if achievable %}
+                    <div class="text-success mb-3"><i class="bi bi-check-circle-fill" style="font-size:3rem"></i></div>
+                    <p class="text-muted fs-5 mb-1">Required GPA in Upcoming Semesters</p>
+                    <div class="display-2 fw-bold text-warning">{{ result }}</div>
+                    <p class="text-muted mt-2">{{ message }}</p>
+                    {% if percentage %}
+                    <div class="alert alert-light mt-3">
+                        Target percentage: <strong>{{ percentage }}%</strong>
+                        <small class="text-muted d-block">(CGPA − 0.25) × 10</small>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-danger mb-3"><i class="bi bi-x-circle-fill" style="font-size:3rem"></i></div>
+                    <p class="text-danger fw-semibold fs-5">{{ message }}</p>
+                    {% if result %}<p class="text-muted small">Calculated required GPA: <strong>{{ result }}</strong> (exceeds maximum)</p>{% endif %}
+                    <p class="text-muted small">Consider increasing upcoming credits or adjusting your target.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-header bg-light fw-semibold"><i class="bi bi-calculator me-2"></i>Formula</div>
+                <div class="card-body">
+                    <div class="bg-light rounded p-3 font-monospace small text-center">
+                        Required GPA = (Target × (Completed + Future) − Current × Completed) ÷ Future
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.set-target').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var input = document.querySelector('input[name="target_cgpa"]');
+        if (input) input.value = this.getAttribute('data-target');
+    });
+});
+</script>
+{% endblock %}

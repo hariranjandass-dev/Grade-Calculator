@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0">
+                <div class="card-body p-5">
+                    <h2 class="fw-bold text-center mb-4"><i class="bi bi-person-plus me-2 text-primary"></i>Create Account</h2>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Full Name</label>
+                            {{ form.full_name }}
+                            {% if form.full_name.errors %}<div class="text-danger small mt-1">{{ form.full_name.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Username</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Password</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-medium">Confirm Password</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Create Account</button>
+                    </form>
+                    <hr class="my-4">
+                    <p class="text-center mb-0">Already have an account? <a href="{% url 'login' %}" class="text-primary fw-medium">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
